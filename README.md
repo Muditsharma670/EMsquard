@@ -1,3 +1,3 @@
 # EMsquard
-this is my first project
-auther mudit sharma
+this is my first project.
+Auther --> mudit sharma
