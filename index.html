@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #cbd5e1; /* Slate 300 */
+        }
+
+        .panel {
+            background-color: #1e293b; /* Slate 800 */
+            border: 1px solid #334155; /* Slate 700 */
+        }
+        
+        .input-field {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            transition: border-color 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #38bdf8; /* Sky 400 */
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        
+        .loader {
+            width: 18px; height: 18px;
+            border: 2px solid #FFF;
+            border-radius: 50%;
+            border-bottom-color: transparent;
+            animation: rotation 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- LOGIN PAGE -->
+    <section id="login-page" class="page min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md panel p-8 rounded-xl shadow-2xl fade-in">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold text-white mb-2">Employee Management System</h1>
+                <div class="h-1 w-16 bg-sky-500 rounded-full mx-auto"></div>
+            </div>
+
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">User ID</label>
+                    <input type="text" id="login-id" placeholder="admin" class="w-full px-4 py-3 rounded-lg input-field text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Password</label>
+                    <input type="password" id="login-password" placeholder="••••••" class="w-full px-4 py-3 rounded-lg input-field text-sm">
+                </div>
+                <button type="submit" id="login-btn" class="w-full py-3 px-4 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-lg transition-colors flex justify-center items-center gap-2">
+                    Login
+                </button>
+            </form>
+            
+            <div class="mt-8 pt-6 border-t border-slate-700 text-center">
+                <p class="text-xs text-slate-500 mb-4">Default: <span class="text-sky-400 font-mono">admin / admin123</span></p>
+                <div class="bg-slate-900/50 rounded-lg p-3 border border-slate-800">
+                    <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Developed By</p>
+                    <p class="text-xs text-sky-400 font-medium">
+                        Kushagra • Krishnaveer • Mudit • Kartik • Piyush
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ADMIN DASHBOARD -->
+    <section id="admin-dashboard-page" class="page hidden w-full">
+        <nav class="bg-slate-800 border-b border-slate-700 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                <div class="font-bold text-white text-lg flex items-center gap-2">
+                    <span class="bg-sky-600 w-8 h-8 rounded flex items-center justify-center text-sm">E</span>
+                    Admin Console
+                </div>
+                <button onclick="window.logout()" class="text-xs font-bold text-red-400 hover:text-red-300 uppercase">Logout</button>
+            </div>
+        </nav>
+
+        <main class="max-w-7xl mx-auto px-4 py-8 fade-in">
+            <!-- Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div class="panel p-6 rounded-lg">
+                    <p class="text-slate-400 text-xs font-bold uppercase">Total Employees</p>
+                    <h3 id="stat-total-emp" class="text-3xl font-bold text-white mt-2">--</h3>
+                </div>
+                <div class="panel p-6 rounded-lg">
+                    <p class="text-slate-400 text-xs font-bold uppercase">Monthly Net Payout</p>
+                    <h3 id="stat-total-payroll" class="text-3xl font-bold text-emerald-400 mt-2">₹0</h3>
+                </div>
+                <div class="panel p-6 rounded-lg flex items-center justify-center">
+                    <button id="add-employee-btn" class="w-full h-full border-2 border-dashed border-slate-600 hover:border-sky-500 text-slate-500 hover:text-sky-500 rounded-lg transition-all flex flex-col items-center justify-center gap-2 py-2">
+                        <span class="text-2xl font-bold">+</span>
+                        <span class="text-sm font-bold uppercase">Add Employee</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="panel rounded-lg overflow-hidden">
+                <div class="p-4 border-b border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <h2 class="font-bold text-white">Employee Directory</h2>
+                    <input type="text" id="search-input" placeholder="Search name or ID..." class="px-3 py-2 rounded bg-slate-900 border border-slate-700 text-sm w-full sm:w-64 focus:border-sky-500 outline-none text-white">
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-900 text-slate-400 uppercase text-xs">
+                            <tr>
+                                <th class="px-6 py-3">Details</th>
+                                <th class="px-6 py-3">Performance</th>
+                                <th class="px-6 py-3 text-right">Base Salary</th>
+                                <th class="px-6 py-3 text-right text-orange-400">TDS (Tax)</th>
+                                <th class="px-6 py-3 text-right text-emerald-400">Net Pay</th>
+                                <th class="px-6 py-3 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employee-list" class="divide-y divide-slate-700"></tbody>
+                    </table>
+                </div>
+                <div id="loading-spinner" class="py-8 text-center hidden"><span class="loader border-sky-500"></span></div>
+                <div id="no-employees-msg" class="py-8 text-center text-slate-500 hidden">No records found.</div>
+            </div>
+        </main>
+    </section>
+
+    <!-- EMPLOYEE DASHBOARD -->
+    <section id="employee-dashboard-page" class="page hidden w-full">
+        <nav class="bg-slate-800 border-b border-slate-700 mb-8">
+            <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-sky-600 flex items-center justify-center text-white font-bold text-sm" id="avatar-initials">U</div>
+                    <span id="welcome-msg" class="text-white font-bold">Welcome</span>
+                </div>
+                <button onclick="window.logout()" class="text-xs font-bold text-red-400 hover:text-red-300 uppercase">Logout</button>
+            </div>
+        </nav>
+
+        <main class="max-w-5xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6 fade-in pb-12">
+            <!-- Profile Card -->
+            <div class="panel p-6 rounded-lg text-center md:col-span-1 h-fit">
+                <div class="w-20 h-20 mx-auto bg-slate-900 rounded-full border-2 border-slate-700 flex items-center justify-center text-3xl font-bold text-white mb-4" id="profile-avatar-big">U</div>
+                <h2 id="profile-name" class="text-xl font-bold text-white">User Name</h2>
+                <p id="profile-dept" class="text-sky-400 text-sm font-medium mb-4">Department</p>
+                <div class="border-t border-slate-700 pt-4 text-left">
+                    <p class="text-xs text-slate-500 uppercase mb-1">Designation</p>
+                    <input type="text" id="emp-post" class="w-full bg-transparent border-b border-slate-700 focus:border-sky-500 text-sm text-white outline-none pb-1" placeholder="Enter title...">
+                </div>
+                <div class="mt-6 text-left">
+                     <div class="flex justify-between items-end mb-1">
+                        <span class="text-xs text-slate-500 uppercase">Performance</span>
+                        <span id="display-rating" class="text-lg font-bold text-white">0.0</span>
+                     </div>
+                     <div class="w-full bg-slate-700 rounded-full h-1.5">
+                        <div id="rating-bar" class="bg-emerald-500 h-1.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Salary & Tax Details -->
+            <div class="md:col-span-2 space-y-6">
+                <!-- Salary Breakdown -->
+                <div class="panel p-6 rounded-lg">
+                    <h3 class="text-white font-bold mb-4">Salary Structure (Monthly)</h3>
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-slate-900/50 p-3 rounded border border-slate-800">
+                            <p class="text-[10px] text-slate-500 uppercase">Base Pay</p>
+                            <p id="disp-base" class="text-lg font-semibold text-white">₹0</p>
+                        </div>
+                        <div class="bg-slate-900/50 p-3 rounded border border-slate-800">
+                            <p class="text-[10px] text-emerald-500 uppercase">Incentives</p>
+                            <p id="disp-bonus" class="text-lg font-semibold text-emerald-400">+₹0</p>
+                        </div>
+                        <div class="bg-slate-900/50 p-3 rounded border border-slate-800">
+                            <p class="text-[10px] text-red-500 uppercase">Deductions (Leaves)</p>
+                            <p id="disp-deduct" class="text-lg font-semibold text-red-400">-₹0</p>
+                        </div>
+                        <div class="bg-slate-900/50 p-3 rounded border border-slate-800">
+                            <p class="text-[10px] text-orange-500 uppercase">Tax (TDS)</p>
+                            <p id="disp-tds" class="text-lg font-semibold text-orange-400">-₹0</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-slate-700 pt-4">
+                        <span class="text-slate-400">Net Payable</span>
+                        <span id="disp-final" class="text-2xl font-bold text-sky-400">₹0</span>
+                    </div>
+                </div>
+
+                <!-- Tax Calculation Logic -->
+                <div class="panel p-6 rounded-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-white font-bold">Tax Computation</h3>
+                        <span class="text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded">New Regime</span>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Annual Gross Income</span>
+                            <span id="tax-gross" class="text-white">₹0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Standard Deduction</span>
+                            <span class="text-emerald-400">- ₹50,000</span>
+                        </div>
+                        <div class="border-t border-slate-700 my-2"></div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-300 font-medium">Taxable Income</span>
+                            <span id="tax-taxable" class="text-white font-bold">₹0</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-3 bg-slate-900 p-3 rounded">
+                            <span class="text-slate-400">Annual Tax Liability</span>
+                            <span id="tax-final" class="text-orange-400 font-bold">₹0</span>
+                        </div>
+                        <p class="text-[10px] text-center text-slate-500 mt-2">
+                            *Standard Deduction is fixed at ₹50,000 for all salaried employees under New Regime.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </section>
+
+    <!-- MODAL: ADD/EDIT EMPLOYEE -->
+    <div id="employee-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-slate-900/90 backdrop-blur-sm">
+        <div class="panel w-full max-w-md p-6 rounded-xl shadow-2xl">
+            <h2 id="form-title" class="text-xl font-bold text-white mb-4">Employee Details</h2>
+            <form id="employee-form" class="space-y-3">
+                <input type="hidden" id="employee-id-hidden">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-slate-500 uppercase font-bold">ID</label>
+                        <input type="text" id="employeeId" class="w-full mt-1 p-2 rounded input-field text-sm" required>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500 uppercase font-bold">Salary (Monthly)</label>
+                        <input type="number" id="salary" class="w-full mt-1 p-2 rounded input-field text-sm" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500 uppercase font-bold">Full Name</label>
+                    <input type="text" id="name" class="w-full mt-1 p-2 rounded input-field text-sm" required>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500 uppercase font-bold">Department</label>
+                    <input type="text" id="department" class="w-full mt-1 p-2 rounded input-field text-sm" required>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="document.getElementById('employee-modal').classList.add('hidden')" class="px-4 py-2 rounded text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" id="submit-btn" class="px-4 py-2 rounded bg-sky-600 hover:bg-sky-500 text-white font-semibold">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ACTIONS -->
+    <div id="action-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-slate-900/90 backdrop-blur-sm">
+        <div class="panel w-full max-w-sm p-6 rounded-xl text-center">
+            <h3 id="modal-title" class="text-lg font-bold text-white mb-2">Action</h3>
+            <div id="modal-body" class="text-slate-400 text-sm mb-6"></div>
+            <div class="flex justify-center gap-3">
+                <button onclick="document.getElementById('action-modal').classList.add('hidden')" class="px-4 py-2 rounded bg-slate-700 text-white hover:bg-slate-600">Cancel</button>
+                <button id="modal-confirm-btn" class="px-4 py-2 rounded bg-sky-600 text-white hover:bg-sky-500">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Using CDN links (Web version) instead of 'npm' imports so it works in the browser
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-analytics.js";
+        import { getFirestore, collection, getDocs, setDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
+
+        // Your NEW Configuration from the screenshot
+        const firebaseConfig = {
+            apiKey: "AIzaSyAYUWwHoa6OuDmRrfd8oE3zpO_HJb5_3y4",
+            authDomain: "ems-78ba4.firebaseapp.com",
+            projectId: "ems-78ba4",
+            storageBucket: "ems-78ba4.firebasestorage.app",
+            messagingSenderId: "91163660314",
+            appId: "1:91163660314:web:2ce44fda6b0048bdfb01a3",
+            measurementId: "G-BHRCS9LLKV"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app); // Added as per your snippet
+        const db = getFirestore(app);
+
+        let employees = [];
+        let currentAction = null;
+        let currentEmployeeId = null;
+
+        const getEl = (id) => document.getElementById(id);
+        const formatMoney = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+
+        class Employee {
+            constructor(data) {
+                this.id = data.id;
+                this.password = data.password;
+                this.name = data.name;
+                this.department = data.department;
+                this.baseSalary = parseFloat(data.baseSalary) || 0;
+                this.leavesTaken = parseInt(data.leavesTaken) || 0;
+                this.performanceRating = parseFloat(data.performanceRating) || 3.0;
+                this.post = data.post || 'Employee';
+                this.role = data.role || 'employee';
+            }
+
+            toFirestore() {
+                return {
+                    id: this.id, password: this.password, name: this.name,
+                    department: this.department, baseSalary: this.baseSalary,
+                    leavesTaken: this.leavesTaken, performanceRating: this.performanceRating,
+                    post: this.post, role: this.role
+                };
+            }
+
+            calculateTax() {
+                const annualGross = this.baseSalary * 12;
+                const standardDeduction = 50000; 
+                const taxableIncome = Math.max(0, annualGross - standardDeduction);
+                
+                let tax = 0;
+                if (taxableIncome > 1500000) tax += (taxableIncome - 1500000) * 0.30 + 150000;
+                else if (taxableIncome > 1200000) tax += (taxableIncome - 1200000) * 0.20 + 90000;
+                else if (taxableIncome > 900000) tax += (taxableIncome - 900000) * 0.15 + 45000;
+                else if (taxableIncome > 600000) tax += (taxableIncome - 600000) * 0.10 + 15000;
+                else if (taxableIncome > 300000) tax += (taxableIncome - 300000) * 0.05;
+
+                if (taxableIncome <= 700000) tax = 0;
+                
+                return { annualGross, standardDeduction, taxableIncome, annualTax: tax * 1.04, monthlyTDS: (tax * 1.04) / 12 };
+            }
+
+            getFinancials() {
+                const taxInfo = this.calculateTax();
+                const perDay = this.baseSalary / 30;
+                const deduction = Math.floor(perDay * this.leavesTaken);
+                const bonus = this.performanceRating > 3.0 ? Math.floor((this.performanceRating - 3.0) * 5000) : 0;
+                const gross = this.baseSalary - deduction + bonus;
+                const net = Math.max(0, gross - taxInfo.monthlyTDS);
+
+                return { base: this.baseSalary, deduction, bonus, gross, tds: taxInfo.monthlyTDS, net, taxDetails: taxInfo };
+            }
+        }
+
+        const fetchEmployees = async () => {
+            getEl('loading-spinner').classList.remove('hidden');
+            try {
+                const snapshot = await getDocs(collection(db, "employees"));
+                employees = [];
+                snapshot.forEach(doc => employees.push(new Employee(doc.data())));
+                if (!employees.find(e => e.role === 'admin')) {
+                    const admin = new Employee({ id: 'admin', password: 'admin123', name: 'Admin', department: 'IT', baseSalary: 0, role: 'admin' });
+                    await setDoc(doc(db, "employees", "admin"), admin.toFirestore());
+                    employees.push(admin);
+                }
+            } catch (err) { alert("Database Error: " + err.message); } 
+            finally { getEl('loading-spinner').classList.add('hidden'); }
+        };
+
+        const renderAdmin = () => {
+            const listEl = getEl('employee-list');
+            listEl.innerHTML = '';
+            const search = getEl('search-input').value.toLowerCase();
+            const staff = employees.filter(e => e.role !== 'admin' && (e.name.toLowerCase().includes(search) || e.id.includes(search)));
+            
+            if (staff.length === 0) getEl('no-employees-msg').classList.remove('hidden');
+            else {
+                getEl('no-employees-msg').classList.add('hidden');
+                let totalNet = 0;
+                staff.forEach(emp => {
+                    const fin = emp.getFinancials();
+                    totalNet += fin.net;
+                    const ratingColor = emp.performanceRating >= 4 ? 'text-emerald-400' : (emp.performanceRating < 3 ? 'text-red-400' : 'text-yellow-400');
+                    
+                    listEl.innerHTML += `
+                        <tr class="hover:bg-slate-800 transition-colors border-b border-slate-700/50">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-white">${emp.name}</div>
+                                <div class="text-xs text-slate-500">ID: ${emp.id} • ${emp.department}</div>
+                            </td>
+                            <td class="px-6 py-4 text-xs">
+                                <div>Leaves: <span class="${emp.leavesTaken>2?'text-red-400':'text-slate-400'}">${emp.leavesTaken}</span></div>
+                                <div>Rating: <span class="${ratingColor} font-bold">${emp.performanceRating}</span></div>
+                            </td>
+                            <td class="px-6 py-4 text-right text-slate-300 font-mono">${formatMoney(fin.gross)}</td>
+                            <td class="px-6 py-4 text-right text-orange-400 text-xs font-mono">${formatMoney(fin.tds)}</td>
+                            <td class="px-6 py-4 text-right text-emerald-400 font-bold font-mono text-base">${formatMoney(fin.net)}</td>
+                            <td class="px-6 py-4 flex justify-center gap-2">
+                                <button onclick="window.manageLeaves('${emp.id}')" class="text-slate-500 hover:text-yellow-400 transition" title="Update Leaves">Leaves</button>
+                                <button onclick="window.manageRating('${emp.id}')" class="text-slate-500 hover:text-emerald-400 transition" title="Update Performance">Rating</button>
+                                <button onclick="window.editEmp('${emp.id}')" class="text-slate-500 hover:text-sky-400 transition" title="Edit Details">Edit</button>
+                                <button onclick="window.deleteEmp('${emp.id}')" class="text-slate-500 hover:text-red-400 transition" title="Delete User">Del</button>
+                            </td>
+                        </tr>`;
+                });
+                getEl('stat-total-emp').textContent = staff.length;
+                getEl('stat-total-payroll').textContent = formatMoney(totalNet);
+            }
+        };
+
+        const renderEmployee = (emp) => {
+            getEl('welcome-msg').textContent = `Hi, ${emp.name}`;
+            getEl('avatar-initials').textContent = emp.name.charAt(0);
+            getEl('profile-avatar-big').textContent = emp.name.charAt(0);
+            getEl('profile-name').textContent = emp.name;
+            getEl('profile-dept').textContent = emp.department;
+            getEl('emp-post').value = emp.post;
+            getEl('display-rating').textContent = emp.performanceRating.toFixed(1);
+            getEl('rating-bar').style.width = `${(emp.performanceRating/5)*100}%`;
+
+            const fin = emp.getFinancials();
+            getEl('disp-base').textContent = formatMoney(fin.base);
+            getEl('disp-deduct').textContent = `-${formatMoney(fin.deduction)}`;
+            getEl('disp-bonus').textContent = `+${formatMoney(fin.bonus)}`;
+            getEl('disp-tds').textContent = `-${formatMoney(fin.tds)}`;
+            getEl('disp-final').textContent = formatMoney(fin.net);
+            getEl('tax-gross').textContent = formatMoney(fin.taxDetails.annualGross);
+            getEl('tax-taxable').textContent = formatMoney(fin.taxDetails.taxableIncome);
+            getEl('tax-final').textContent = formatMoney(fin.taxDetails.annualTax);
+        };
+
+        const switchPage = (id) => {
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            getEl(id).classList.remove('hidden');
+        };
+
+        window.editEmp = (id) => {
+            const emp = employees.find(x => x.id === id);
+            getEl('form-title').textContent = "Edit Employee";
+            getEl('employee-id-hidden').value = emp.id;
+            getEl('employeeId').value = emp.id;
+            getEl('employeeId').disabled = true;
+            getEl('name').value = emp.name;
+            getEl('department').value = emp.department;
+            getEl('salary').value = emp.baseSalary;
+            getEl('employee-modal').classList.remove('hidden');
+        };
+
+        window.deleteEmp = (id) => {
+            const emp = employees.find(x => x.id === id);
+            currentAction = 'delete';
+            currentEmployeeId = id;
+            getEl('modal-title').textContent = "Delete User?";
+            getEl('modal-body').innerHTML = `Are you sure you want to remove <b>${emp.name}</b>?`;
+            getEl('action-modal').classList.remove('hidden');
+        };
+
+        window.manageLeaves = (id) => {
+            const emp = employees.find(x => x.id === id);
+            currentAction = 'leaves';
+            currentEmployeeId = id;
+            getEl('modal-title').textContent = `Update Leaves: ${emp.name}`;
+            getEl('modal-body').innerHTML = `
+                <label class="block text-left text-xs uppercase font-bold text-slate-500 mb-2">Total Leaves Taken</label>
+                <input type="number" id="modal-input-val" value="${emp.leavesTaken}" class="w-full p-2 rounded bg-slate-800 border border-slate-600 text-white">
+            `;
+            getEl('action-modal').classList.remove('hidden');
+        };
+
+        window.manageRating = (id) => {
+            const emp = employees.find(x => x.id === id);
+            currentAction = 'rating';
+            currentEmployeeId = id;
+            getEl('modal-title').textContent = `Update Performance: ${emp.name}`;
+            getEl('modal-body').innerHTML = `
+                <label class="block text-left text-xs uppercase font-bold text-slate-500 mb-2">Rating (0.0 - 5.0)</label>
+                <input type="number" step="0.1" min="0" max="5" id="modal-input-val" value="${emp.performanceRating}" class="w-full p-2 rounded bg-slate-800 border border-slate-600 text-white">
+                <p class="text-[10px] text-emerald-400 mt-2 text-left">* Ratings above 3.0 trigger bonuses.</p>
+            `;
+            getEl('action-modal').classList.remove('hidden');
+        };
+
+        getEl('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = getEl('login-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<span class="loader"></span>`;
+            
+            await fetchEmployees();
+            const user = employees.find(u => u.id === getEl('login-id').value && u.password === getEl('login-password').value);
+            
+            if (user) {
+                sessionStorage.setItem('uid', user.id);
+                user.role === 'admin' ? (switchPage('admin-dashboard-page'), renderAdmin()) : (switchPage('employee-dashboard-page'), renderEmployee(user));
+            } else {
+                alert("Invalid Credentials");
+            }
+            btn.innerHTML = originalText;
+        });
+
+        getEl('employee-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = getEl('submit-btn');
+            const originalText = btn.textContent;
+            btn.textContent = "Saving...";
+            
+            const hiddenId = getEl('employee-id-hidden').value;
+            const data = {
+                id: getEl('employeeId').value,
+                name: getEl('name').value,
+                department: getEl('department').value,
+                baseSalary: getEl('salary').value
+            };
+
+            try {
+                if (hiddenId) {
+                    await updateDoc(doc(db, "employees", hiddenId), data);
+                    Object.assign(employees.find(x => x.id === hiddenId), data);
+                } else {
+                    if (employees.some(x => x.id === data.id)) throw new Error("ID Exists");
+                    const newEmp = new Employee({ ...data, password: 'employee123', role: 'employee' });
+                    await setDoc(doc(db, "employees", data.id), newEmp.toFirestore());
+                    employees.push(newEmp);
+                }
+                renderAdmin();
+                getEl('employee-modal').classList.add('hidden');
+            } catch (err) { alert(err.message); }
+            btn.textContent = originalText;
+        });
+
+        getEl('modal-confirm-btn').addEventListener('click', async () => {
+            const btn = getEl('modal-confirm-btn');
+            btn.textContent = "...";
+            const emp = employees.find(x => x.id === currentEmployeeId);
+            
+            if (currentAction === 'delete') {
+                await deleteDoc(doc(db, "employees", currentEmployeeId));
+                employees = employees.filter(x => x.id !== currentEmployeeId);
+            } else if (currentAction === 'leaves') {
+                const val = parseInt(getEl('modal-input-val').value);
+                await updateDoc(doc(db, "employees", currentEmployeeId), { leavesTaken: val });
+                emp.leavesTaken = val;
+            } else if (currentAction === 'rating') {
+                const val = parseFloat(getEl('modal-input-val').value);
+                await updateDoc(doc(db, "employees", currentEmployeeId), { performanceRating: val });
+                emp.performanceRating = val;
+            }
+            renderAdmin();
+            getEl('action-modal').classList.add('hidden');
+            btn.textContent = "Confirm";
+        });
+
+        getEl('add-employee-btn').addEventListener('click', () => {
+            getEl('employee-form').reset();
+            getEl('form-title').textContent = "Add Employee";
+            getEl('employee-id-hidden').value = '';
+            getEl('employeeId').disabled = false;
+            getEl('employee-modal').classList.remove('hidden');
+        });
+
+        getEl('search-input').addEventListener('input', renderAdmin);
+        window.logout = () => { sessionStorage.clear(); location.reload(); };
+        
+        getEl('emp-post').addEventListener('change', async (e) => {
+            const uid = sessionStorage.getItem('uid');
+            await updateDoc(doc(db, "employees", uid), { post: e.target.value });
+        });
+    </script>
+</body>
+</html>
